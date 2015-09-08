@@ -180,6 +180,8 @@ PostgreSQL изначально поддерживает только нумер
 ### Лицензия
 Copyright (c) 2015 Andrey Yanov (andr213@gmail.com)
 
+[See the LICENSE for details.](https://github.com/andr213/node-postgres-omni/blob/master/license.md)
+
 ### Похожие модули NODE
 
 * [pg-spice](https://github.com/sehrope/node-pg-spice)
