@@ -1,1 +1,1 @@
-# README
+# omni-placeholders for node-postgres
