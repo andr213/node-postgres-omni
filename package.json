@@ -1,0 +1,30 @@
+{
+	"name": "pg-omni",
+	"version": "0.0.1",
+	"description": "omni-placeholders for node-postgres",
+	"keywords": [
+		"postgres",
+		"postgre",
+		"postgresql",
+		"pg",
+		"named",
+		"numeric",
+		"positional",
+		"omni",
+		"placeholders"
+	],
+	"homepage": "http://github.com/andr213/node-postgres-omni",
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/andr213/node-postgres-omni.git"
+	},
+	"author": "Andrey Yanov <andr213@gmail.com>",
+	"main": "./lib",
+	"dependencies": {
+		"lodash": "~2.3.0"
+	},
+	"license": "MIT",
+	"engines": {
+		"node": ">= 0.8.0"
+	}
+}
