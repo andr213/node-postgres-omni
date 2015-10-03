@@ -27,7 +27,7 @@
 
 PostgreSQL изначально поддерживает только нумерованные заполнители, поэтому модуль [node-postgres](https://github.com/brianc/node-postgres) тоже использует только их, чтобы максимально придерживаться спецификации СУБД.
 
-Модуль pg-omni расширяет возможности [node-postgres](https://github.com/brianc/node-postgres), позволяя работать с тремя основными заполнителями. Их можно чередовать или использовать только один тип. Единственное ограничение - их нельзя смешивать в одном запросе.
+Модуль pg-omni расширяет возможности [node-postgres](https://github.com/brianc/node-postgres), позволяя работать с тремя основными типами заполнителей. Их можно чередовать или использовать только один тип. Единственное ограничение - их нельзя смешивать в одном запросе.
 
 Любые заполнители, которые вы используете, модуль преобразовывает в стандартные нумерованные заполнители и передает их на обработку в [node-postgres](https://github.com/brianc/node-postgres).
 
@@ -51,7 +51,7 @@ PostgreSQL изначально поддерживает только нумер
     
     var pgOmni = require('pg-omni');
     var client = new pg.Client(conString);
-    pgOmni.omni(client); // or simple pgOmni(client);
+    pgOmni.omni(client); // или просто pgOmni(client);
     
     pgOmni.query(...);
 
@@ -59,7 +59,7 @@ PostgreSQL изначально поддерживает только нумер
 
     var conString = "pg://dbuser:dbpassword@localhost:5432/dbname";
 
-    var pgOmni = require('./node-postgres-omni').pg;
+    var pgOmni = require('pg-omni').pg;
     var client = new pgOmni.Client(conString);
     
     pgOmni.query(...);
@@ -177,6 +177,10 @@ PostgreSQL изначально поддерживает только нумер
     
     и т.д.
     
+### Зависимости
+    [lodash](https://www.npmjs.com/package/lodash)
+    [pg](https://www.npmjs.com/package/pg)
+
 ### Лицензия
 Copyright (c) 2015 Andrey Yanov (andr213@gmail.com)
 

@@ -1,6 +1,6 @@
 {
 	"name": "pg-omni",
-	"version": "0.0.1",
+	"version": "0.1",
 	"description": "omni-placeholders for node-postgres",
 	"keywords": [
 		"postgres",
