@@ -1,18 +1,18 @@
 // transform array values into numbered hash
-function transformValues (values) {
-  var isArray = typeof values === 'object' && Array.isArray(values);
-  if (isArray) {
-    return values.reduce(function (result, item, index) {
-      result[index + 1] = item;
-      return result;
-    }, {});
-  }
+function transformValues(values) {
+  const isArray = typeof values === 'object' && Array.isArray(values);
 
-  return values;
-};
+  if (!isArray) return values;
+
+  return values.reduce((accum, item, index) => {
+    accum[index + 1] = item;
+
+    return accum;
+  }, {});
+}
 
 // determine placeholder type
-function getPlaceholderType (placeholder) {
+function getPlaceholderType(placeholder) {
   if (placeholder.match(/^\$\d+\b$/)) {
     return 'positional'
   } else if (placeholder.match(/^\$[a-z][\w|\d]*\b$/)) {
@@ -20,11 +20,13 @@ function getPlaceholderType (placeholder) {
   } else {
     return 'numeric'
   }
-};
+}
 
 // transform string type params into object config style
-function makeConfig (conf, values, callback) {
-  var config = typeof conf === 'string' ? { text: conf } : conf;
+function makeConfig(conf, values, callback) {
+  const config = typeof conf === 'string'
+    ? { text: conf }
+    : conf;
 
   if (values) {
     if(typeof values === 'function') {
@@ -32,13 +34,14 @@ function makeConfig (conf, values, callback) {
     } else {
       config.values = values;
     }
-  };
+  }
+
   if (callback) {
     config.callback = callback;
-  };
+  }
 
   return config;
-};
+}
 
 // Transform config to original numeric placeholders
 function transformConfig (sql, values, callback, strict) {
@@ -48,7 +51,8 @@ function transformConfig (sql, values, callback, strict) {
     i = 1, // placeholder number
     outParams = [], // out params
     hashParams = {}, // cache of placeholders
-    placeholderType = '';
+    placeholderType = '',
+    find;
 
   var hashValues = transformValues(values);
 
@@ -62,7 +66,7 @@ function transformConfig (sql, values, callback, strict) {
       if (placeholderType !== getPlaceholderType(find[0])) {
         callback(new Error('Using different types of placeholders in one query is restricted.'))
       }
-    };
+    }
 
     // hash placeholder name
     var placeholderName = find[0].substring(1) + (find[0] === '$' ? i : '');
@@ -76,14 +80,14 @@ function transformConfig (sql, values, callback, strict) {
         // Error if strict mode
         if (strict) {
           callback(new Error('Sql placeholders does not match with values'));
-        };
-      };
+        }
+      }
 
       // transform single value to array
-      var isArray = typeof hashValues[placeholderName] === 'object' && Array.isArray(hashValues[placeholderName]);
+      const isArray = typeof hashValues[placeholderName] === 'object' && Array.isArray(hashValues[placeholderName]);
       if (!isArray) {
         hashValues[placeholderName] = [hashValues[placeholderName]];
-      };
+      }
 
       // iterate array values and replace for numeric values
       hashValues[placeholderName].forEach(function(value) {
@@ -93,23 +97,23 @@ function transformConfig (sql, values, callback, strict) {
       // replace single to multiple placeholders = $1 -> $1,$2
 
       hashParams[placeholderName] = placeholder.substring(0, placeholder.length - 1);
-    };
+    }
 
     // add sql with placeholder
     resultSql += sql.slice(last, find.index) + hashParams[placeholderName];
 
     // remember placeholder end index
     last = pattern.lastIndex;
-  };
+  }
 
   // add the rest of query sql
   resultSql += sql.slice(last, sql.length);
 
   // return values
   callback(null, { "text": resultSql, 'values': outParams });
-};
+}
 
-var omniQuery = function (conf, values, callback, originalQuery, strict) {
+const omniQuery = function (conf, values, callback, originalQuery, strict) {
   var config = makeConfig(conf, values, callback);
 
   if (config && config.text && config.text !== '' && typeof config.text === 'string') {
@@ -121,7 +125,7 @@ var omniQuery = function (conf, values, callback, originalQuery, strict) {
           } else {
             throw error;
           }
-        };
+        }
         config.text = result.text;
         config.values = result.values;
       }, strict);
@@ -134,16 +138,18 @@ var omniQuery = function (conf, values, callback, originalQuery, strict) {
     }
   } else { // prepared query
     callback(new Error('Prepared query does not supports'));
-  };
+  }
 };
 
 // patching query inside instance of client object
-function omni (client, strict) {
+function omni(client, strict) {
   // strict default
-  if (strict === undefined) {strict = false};
+  if (strict === undefined) {
+    strict = false
+  }
 
   // Save original query
-  var originalQuery = client.query;
+  let originalQuery = client.query;
 
   // return if allready overrided
   if (originalQuery.omni) return client;
@@ -154,29 +160,35 @@ function omni (client, strict) {
   client.query = function (config, values, callback) {
     return omniQuery.call(this, config, values, callback, originalQuery, strict);
   };
+
   // omni Flag
   client.query.omni = true;
 
   return client;
-};
+}
 
 // return new original pg object with patched prototype query
 function pgOmni (strict) {
   // strict default
-  if (strict === undefined) { strict = false };
+  if (strict === undefined) {
+    strict = false
+  }
 
-  var pg = require('pg');
-  var originalQuery = pg.Client.prototype.query;
+  const pg = require('pg');
+  const originalQuery = pg.Client.prototype.query;
 
   pg.Client.prototype.query = function (config, values, callback) {
     return omniQuery.call(this, config, values, callback, originalQuery, strict);
   };
 
   return pg;
-};
+}
 
 module.exports = omni;
 module.exports.omni = omni;
+
+// for testing only
+module.exports.transformValues = transformValues;
 
 // lazy loading pg
 module.exports.__defineGetter__('pg', function () {
