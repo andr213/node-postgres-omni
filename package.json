@@ -2,6 +2,18 @@
   "name": "pg-omni",
   "version": "0.1.0",
   "description": "omni-placeholders for node-postgres",
+  "scripts": {
+    "build": "npm run clean && npm run build:cjs && npm run build:es",
+    "eslint": "eslint src/**/*.js --ignore-pattern 'src/**/*.test.js'",
+    "build:cjs": "cross-env NODE_ENV=cjsmodules babel src --out-dir dist/lib",
+    "build:es": "cross-env NODE_ENV=esmodules babel src --out-dir dist/es",
+    "test": "cross-env NODE_ENV=test jest",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:watchAll": "cross-env NODE_ENV=test jest --watchAll",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage",
+    "clean": "rm -rf dist",
+    "prepush": "npm run test"
+  },
   "keywords": [
     "postgres",
     "postgre",
@@ -11,19 +23,48 @@
     "numeric",
     "positional",
     "omni",
-    "placeholders"
+    "placeholders",
+    "multi"
   ],
   "homepage": "http://github.com/andr213/node-postgres-omni",
   "repository": {
     "type": "git",
     "url": "git://github.com/andr213/node-postgres-omni.git"
   },
-  "author": "Andrey Yanov <andr213@gmail.com>",
-  "main": "./lib",
-  "dependencies": {
-  },
-  "license": "MIT",
   "engines": {
-    "node": ">= 0.8.0"
-  }
+    "node": ">=8.1",
+    "npm": ">=5.1"
+  },
+  "author": "Andrey Yanov <andr213@gmail.com>",
+  "main": "./dist/lib/index.js",
+  "es": "./dist/es/index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "@babel/cli": "~7.2.3",
+    "@babel/core": "~7.2.2",
+    "@babel/plugin-transform-modules-commonjs": "~7.2.0",
+    "@babel/plugin-transform-runtime": "~7.2.0",
+    "@babel/preset-env": "~7.2.3",
+    "@babel/runtime": "^7.3.1",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-eslint": "~10.0.1",
+    "babel-jest": "~23.6.0",
+    "cross-env": "~5.2.0",
+    "eslint": "~5.12.0",
+    "eslint-config-airbnb-base": "^12.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "jest": "~23.6.0",
+    "pg": "^7.5.0"
+  },
+  "jest": {
+    "testMatch": [
+      "**/?(*.)+(spec|jest).js"
+    ],
+    "verbose": true,
+    "moduleDirectories": [
+      "node_modules",
+      "src"
+    ]
+  },
+  "license": "MIT"
 }

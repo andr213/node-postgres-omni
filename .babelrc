@@ -1,0 +1,31 @@
+{
+  "env": {
+    "cjsmodules": {
+      "ignore": [
+        "*.test.js",
+        "**/*.test.js"
+      ],
+      "plugins": [
+        "@babel/transform-runtime",
+        "@babel/plugin-transform-modules-commonjs"
+      ],
+      "presets": [["@babel/env", { "modules": "commonjs" }]]
+    },
+    "esmodules": {
+      "ignore": [
+        "*.test.js",
+        "**/*.test.js"
+      ],
+      "plugins": [
+        "@babel/transform-runtime"
+      ],
+      "presets": [["@babel/env", { "modules": false }]]
+    },
+    "test": {
+      "plugins": [
+        "@babel/transform-runtime"
+      ],
+      "presets": ["@babel/env"]
+    }
+  }
+}
