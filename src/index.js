@@ -1,3 +1,9 @@
+/**
+ *
+ * @author andr213@gmail.com
+ */
+
+
 // transform array values into numbered hash
 function transformValues(values) {
   const isArray = typeof values === 'object' && Array.isArray(values);
@@ -11,14 +17,26 @@ function transformValues(values) {
   }, {});
 }
 
-// determine placeholder type
+const TYPES = {
+  POS: 'positional',
+  NAME: 'named',
+  NUM: 'numeric'
+};
+
+// figure out placeholder type
 function getPlaceholderType(placeholder) {
+  if (placeholderType) {
+    return placeholderType;
+  }
+
   if (placeholder.match(/^\$\d+\b$/)) {
-    return 'positional'
+    return TYPES.NUM;
   } else if (placeholder.match(/^\$[a-z][\w|\d]*\b$/)) {
-    return 'named'
+    return TYPES.NAME;
+  } else if (placeholder.match(/^\$\b$/)) {
+    return TYPES.POS;
   } else {
-    return 'numeric'
+    throw new Error('Unknown placeholder type');
   }
 }
 
@@ -29,7 +47,7 @@ function makeConfig(conf, values, callback) {
     : conf;
 
   if (values) {
-    if(typeof values === 'function') {
+    if (typeof values === 'function') {
       config.callback = values;
     } else {
       config.values = values;
@@ -45,16 +63,22 @@ function makeConfig(conf, values, callback) {
 
 // Transform config to original numeric placeholders
 function transformConfig (sql, values, callback, strict) {
-  var pattern = /(\$\d+\b)|(\$[a-z][\w|\d]*\b)|(\${1})/gmi,
-    last = 0, // lastIndex
+
+  const pattern = /(\$\d+\b)|(\$[a-z][\w|\d]*\b)|(\${1})/gmi;
+
+  // out params
+  const outParams = [];
+
+  // hash of placeholders
+  const hashParams = {};
+
+  let last = 0, // lastIndex
     resultSql = '',
     i = 1, // placeholder number
-    outParams = [], // out params
-    hashParams = {}, // cache of placeholders
     placeholderType = '',
     find;
 
-  var hashValues = transformValues(values);
+  const hashValues = transformValues(values);
 
   while ((find = pattern.exec(sql)) != null) {
     // check if placeholder type differs
@@ -69,10 +93,10 @@ function transformConfig (sql, values, callback, strict) {
     }
 
     // hash placeholder name
-    var placeholderName = find[0].substring(1) + (find[0] === '$' ? i : '');
+    const placeholderName = find[0].substring(1) + (find[0] === '$' ? i : '');
 
     // variable for multiple placeholders
-    var placeholder = '';
+    let placeholder = '';
 
     if (!hashParams.hasOwnProperty(placeholderName)) {
       // check if values does not include value
@@ -110,11 +134,11 @@ function transformConfig (sql, values, callback, strict) {
   resultSql += sql.slice(last, sql.length);
 
   // return values
-  callback(null, { "text": resultSql, 'values': outParams });
+  callback(null, { text: resultSql, values: outParams });
 }
 
 const omniQuery = function (conf, values, callback, originalQuery, strict) {
-  var config = makeConfig(conf, values, callback);
+  const config = makeConfig(conf, values, callback);
 
   if (config && config.text && config.text !== '' && typeof config.text === 'string') {
     if (config.values && config.values.length && config.values.length > 0) {
@@ -137,21 +161,16 @@ const omniQuery = function (conf, values, callback, originalQuery, strict) {
       return originalQuery.call(this, config);
     }
   } else { // prepared query
-    callback(new Error('Prepared query does not supports'));
+    callback(new Error('Prepared query does not support'));
   }
 };
 
 // patching query inside instance of client object
-function omni(client, strict) {
-  // strict default
-  if (strict === undefined) {
-    strict = false
-  }
-
+function omni(client, strict = false) {
   // Save original query
   let originalQuery = client.query;
 
-  // return if allready overrided
+  // return in case overridden already
   if (originalQuery.omni) return client;
 
   originalQuery = originalQuery.bind(client);
@@ -161,19 +180,14 @@ function omni(client, strict) {
     return omniQuery.call(this, config, values, callback, originalQuery, strict);
   };
 
-  // omni Flag
+  // omni Flag to inform that overridden
   client.query.omni = true;
 
   return client;
 }
 
 // return new original pg object with patched prototype query
-function pgOmni (strict) {
-  // strict default
-  if (strict === undefined) {
-    strict = false
-  }
-
+function pgOmni(strict = false) {
   const pg = require('pg');
   const originalQuery = pg.Client.prototype.query;
 
@@ -184,8 +198,25 @@ function pgOmni (strict) {
   return pg;
 }
 
+// predefined placeholder type. undefined value equal auto detection
+let placeholderType;
+
+// predefine placeholder type. by default is auto
+function setType(type) {
+  const isCorrectType = [TYPES.POS, TYPES.NAME, TYPES.NUM].some(item => item === type);
+
+  if (isCorrectType) {
+    placeholderType = type;
+  } else {
+    // set to default (auto)
+    placeholderType = undefined;
+  }
+}
+
 module.exports = omni;
 module.exports.omni = omni;
+module.exports.TYPES = TYPES;
+module.exports.setType = setType;
 
 // for testing only
 module.exports.transformValues = transformValues;
