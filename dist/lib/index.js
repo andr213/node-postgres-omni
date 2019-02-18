@@ -4,6 +4,10 @@ var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefau
 
 var _typeof2 = _interopRequireDefault(require("@babel/runtime/helpers/typeof"));
 
+/**
+ *
+ * @author andr213@gmail.com
+ */
 // transform array values into numbered hash
 function transformValues(values) {
   var isArray = (0, _typeof2.default)(values) === 'object' && Array.isArray(values);
@@ -12,16 +16,27 @@ function transformValues(values) {
     accum[index + 1] = item;
     return accum;
   }, {});
-} // determine placeholder type
+}
 
+var TYPES = {
+  POS: 'positional',
+  NAME: 'named',
+  NUM: 'numeric'
+}; // figure out placeholder type
 
 function getPlaceholderType(placeholder) {
+  if (placeholderType) {
+    return placeholderType;
+  }
+
   if (placeholder.match(/^\$\d+\b$/)) {
-    return 'positional';
+    return TYPES.NUM;
   } else if (placeholder.match(/^\$[a-z][\w|\d]*\b$/)) {
-    return 'named';
+    return TYPES.NAME;
+  } else if (placeholder.match(/^\$\b$/)) {
+    return TYPES.POS;
   } else {
-    return 'numeric';
+    throw new Error('Unknown placeholder type');
   }
 } // transform string type params into object config style
 
@@ -48,16 +63,16 @@ function makeConfig(conf, values, callback) {
 
 
 function transformConfig(sql, values, callback, strict) {
-  var pattern = /(\$\d+\b)|(\$[a-z][\w|\d]*\b)|(\${1})/gmi,
-      last = 0,
+  var pattern = /(\$\d+\b)|(\$[a-z][\w|\d]*\b)|(\${1})/gmi; // out params
+
+  var outParams = []; // hash of placeholders
+
+  var hashParams = {};
+  var last = 0,
       // lastIndex
   resultSql = '',
       i = 1,
       // placeholder number
-  outParams = [],
-      // out params
-  hashParams = {},
-      // cache of placeholders
   placeholderType = '',
       find;
   var hashValues = transformValues(values);
@@ -114,8 +129,8 @@ function transformConfig(sql, values, callback, strict) {
   resultSql += sql.slice(last, sql.length); // return values
 
   callback(null, {
-    "text": resultSql,
-    'values': outParams
+    text: resultSql,
+    values: outParams
   });
 }
 
@@ -144,26 +159,22 @@ var omniQuery = function omniQuery(conf, values, callback, originalQuery, strict
     }
   } else {
     // prepared query
-    callback(new Error('Prepared query does not supports'));
+    callback(new Error('Prepared query does not support'));
   }
 }; // patching query inside instance of client object
 
 
-function omni(client, strict) {
-  // strict default
-  if (strict === undefined) {
-    strict = false;
-  } // Save original query
-
-
-  var originalQuery = client.query; // return if allready overrided
+function omni(client) {
+  var strict = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+  // Save original query
+  var originalQuery = client.query; // return in case overridden already
 
   if (originalQuery.omni) return client;
   originalQuery = originalQuery.bind(client); // Override original query
 
   client.query = function (config, values, callback) {
     return omniQuery.call(this, config, values, callback, originalQuery, strict);
-  }; // omni Flag
+  }; // omni Flag to inform that overridden
 
 
   client.query.omni = true;
@@ -171,11 +182,8 @@ function omni(client, strict) {
 } // return new original pg object with patched prototype query
 
 
-function pgOmni(strict) {
-  // strict default
-  if (strict === undefined) {
-    strict = false;
-  }
+function pgOmni() {
+  var strict = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
   var pg = require('pg');
 
@@ -186,10 +194,28 @@ function pgOmni(strict) {
   };
 
   return pg;
+} // predefined placeholder type. undefined value equal auto detection
+
+
+var placeholderType; // predefine placeholder type. by default is auto
+
+function setType(type) {
+  var isCorrectType = [TYPES.POS, TYPES.NAME, TYPES.NUM].some(function (item) {
+    return item === type;
+  });
+
+  if (isCorrectType) {
+    placeholderType = type;
+  } else {
+    // set to default (auto)
+    placeholderType = undefined;
+  }
 }
 
 module.exports = omni;
-module.exports.omni = omni; // for testing only
+module.exports.omni = omni;
+module.exports.TYPES = TYPES;
+module.exports.setType = setType; // for testing only
 
 module.exports.transformValues = transformValues; // lazy loading pg
 

@@ -176,9 +176,33 @@ PostgreSQL изначально поддерживает только нумер
     });
     
     и т.д.
-    
+
+### Предустановленный тип заполнителя
+По-умолчанию тип заполнителя определяется автоматически, но есть возможность их определить заранее. Это даст небольшой прирост скорости.
+
+
+```javascript
+    const conString = "pg://dbuser:dbpassword@localhost:5432/dbname";
+
+    const pgOmni = require('pg-omni').pg;
+    const TYPES = require('pg-omni').TYPES;
+    const setType = require('pg-omni').setType;
+
+    // для использования позиционных
+    setType(TYPES.POS)
+
+    // или для использования нумерованных
+    setType(TYPES.NUM)
+
+    // или для использования именных
+    setType(TYPES.NAMED)
+
+    var client = new pgOmni.Client(conString);
+
+    pgOmni.query(...);
+```
+
 ### Зависимости
-    [lodash](https://www.npmjs.com/package/lodash)
     [pg](https://www.npmjs.com/package/pg)
 
 ### Лицензия
