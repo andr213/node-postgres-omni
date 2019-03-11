@@ -8,7 +8,12 @@ var _typeof2 = _interopRequireDefault(require("@babel/runtime/helpers/typeof"));
  *
  * @author andr213@gmail.com
  */
-// transform array values into numbered hash
+var TYPES = {
+  POS: 'positional',
+  NAME: 'named',
+  NUM: 'numeric'
+}; // transform array values into numbered hash
+
 function transformValues(values) {
   var isArray = (0, _typeof2.default)(values) === 'object' && Array.isArray(values);
   if (!isArray) return values;
@@ -16,13 +21,8 @@ function transformValues(values) {
     accum[index + 1] = item;
     return accum;
   }, {});
-}
+} // figure out placeholder type
 
-var TYPES = {
-  POS: 'positional',
-  NAME: 'named',
-  NUM: 'numeric'
-}; // figure out placeholder type
 
 function getPlaceholderType(placeholder) {
   if (placeholderType) {
@@ -33,7 +33,7 @@ function getPlaceholderType(placeholder) {
     return TYPES.NUM;
   } else if (placeholder.match(/^\$[a-z][\w|\d]*\b$/)) {
     return TYPES.NAME;
-  } else if (placeholder.match(/^\$\b$/)) {
+  } else if (placeholder.match(/^\$$/)) {
     return TYPES.POS;
   } else {
     throw new Error('Unknown placeholder type');
@@ -73,7 +73,8 @@ function transformConfig(sql, values, callback, strict) {
   resultSql = '',
       i = 1,
       // placeholder number
-  placeholderType = '',
+  num = 1,
+      placeholderType = '',
       find;
   var hashValues = transformValues(values);
 
@@ -90,7 +91,7 @@ function transformConfig(sql, values, callback, strict) {
     } // hash placeholder name
 
 
-    var placeholderName = find[0].substring(1) + (find[0] === '$' ? i : ''); // variable for multiple placeholders
+    var placeholderName = find[0].substring(1) + (find[0] === '$' ? num++ : ''); // variable for multiple placeholders
 
     var placeholder = '';
 
@@ -138,7 +139,7 @@ var omniQuery = function omniQuery(conf, values, callback, originalQuery, strict
   var config = makeConfig(conf, values, callback);
 
   if (config && config.text && config.text !== '' && typeof config.text === 'string') {
-    if (config.values && config.values.length && config.values.length > 0) {
+    if (config && config.values && Object.keys(config.values).length > 0) {
       transformConfig(config.text, config.values, function (error, result) {
         if (error) {
           if (callback) {

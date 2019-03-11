@@ -6,8 +6,8 @@
     client.query(
         'select name from cities where country = $country and population > $population',
         {'country': 'USA', 'population': 1000000},
-        function (error, results) { console.log(results) };
-    });
+        function (error, results) { console.log(results) }
+    );
     
     // позиционные заполнители
     client.query(
@@ -52,7 +52,7 @@ PostgreSQL изначально поддерживает только нумер
     var pgOmni = require('pg-omni');
     var client = new pg.Client(conString);
     pgOmni.omni(client); // или просто pgOmni(client);
-    
+
     pgOmni.query(...);
 
 Второй способ: получить уже пропатченый объект pg
@@ -61,8 +61,12 @@ PostgreSQL изначально поддерживает только нумер
 
     var pgOmni = require('pg-omni').pg;
     var client = new pgOmni.Client(conString);
-    
-    pgOmni.query(...);
+
+    client.connect();
+    ...
+    client.query(...);
+    ...
+    client.end();
 
 ## Заполнители
 Заполнитель - переменная в sql-запросе, которая при обработке СУБД будет заменена соотвествующим ей значением.
@@ -80,9 +84,9 @@ PostgreSQL изначально поддерживает только нумер
     
     client.query(
         'select name from cities where country = $country and population > $population',
-        {'country': 'USA', 'population': 1000000},
-        function (error, results) { console.log(results) };
-    });
+        { 'country': 'USA', 'population': 1000000 },
+        function (error, results) { console.log(results) }
+    );
     
     
 * связываемые переменные должны передаваться в виде объекта
@@ -99,8 +103,8 @@ PostgreSQL изначально поддерживает только нумер
     client.query(
         'select name from cities where country = $ and population > $',
         ['USA', 1000000],
-        function (error, results) { console.log(results) };
-    });
+        function (error, results) { console.log(results) }
+    );
     
 * связываемые переменные должны передаваться в виде массива
 * количество заполнителей в запросе должно строго совпадать с количеством связываемых переменных
@@ -115,8 +119,8 @@ PostgreSQL изначально поддерживает только нумер
     client.query(
         'select name from cities where country = $1 and population > $2',
         ['USA', 1000000],
-        function (error, results) { console.log(results) };
-    });
+        function (error, results) { console.log(results) }
+    );
     
 * связываемые переменные должны передаваться в виде массива
 * порядок следования в sql-запросе не важен
@@ -131,22 +135,22 @@ PostgreSQL изначально поддерживает только нумер
     client.query(
         'select name from cities where country in ($country) and population > $population',
         {'country': ['USA, CANADA'], 'population': 1000000},
-        function (error, results) { console.log(results) };
-    });
+        function (error, results) { console.log(results) }
+    );
     
     // с позиционными заполнителями
     client.query(
         'select name from cities where country in ($) and population > $',
         [['USA, CANADA'], 1000000],
-        function (error, results) { console.log(results) };
-    });
+        function (error, results) { console.log(results) }
+    );
     
     // с нумерованными заполнителями
     client.query(
         'select name from cities where country in ($1) and population > $2',
         [['USA, CANADA'], 1000000],
-        function (error, results) { console.log(results) };
-    });
+        function (error, results) { console.log(results) }
+    );
 
 Особенно удобно использовать их в операторах INSERT, например, наряду с использованием в обычном виде:
 
@@ -154,8 +158,8 @@ PostgreSQL изначально поддерживает только нумер
     client.query(
         'insert into cities (name, country, population) values ($name, $country, $population)',
         {'name': 'New York, 'country': 'USA', 'population': 8000000},
-        function (error, results) { console.log(results) };
-    });
+        function (error, results) { console.log(results) }
+    );
     
 вы можете использовать еще и:
 
@@ -163,8 +167,8 @@ PostgreSQL изначально поддерживает только нумер
     client.query(
         'insert into cities (name, country, population) values ($values)',
         {'values': ['New York, 'USA', 8000000]},
-        function (error, results) { console.log(results) };
-    });
+        function (error, results) { console.log(results) }
+    );
     
     или
     
@@ -172,8 +176,8 @@ PostgreSQL изначально поддерживает только нумер
     client.query(
         'insert into cities (name, country, population) values ($1)',
         [['New York, 'USA', 8000000]],
-        function (error, results) { console.log(results) };
-    });
+        function (error, results) { console.log(results) }
+    );
     
     и т.д.
 
@@ -199,7 +203,11 @@ PostgreSQL изначально поддерживает только нумер
 
     var client = new pgOmni.Client(conString);
 
-    pgOmni.query(...);
+    client.connect();
+    ...
+    client.query(...);
+    ...
+    client.end();
 ```
 
 ### Зависимости

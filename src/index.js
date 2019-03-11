@@ -3,6 +3,12 @@
  * @author andr213@gmail.com
  */
 
+const TYPES = {
+  POS: 'positional',
+  NAME: 'named',
+  NUM: 'numeric'
+};
+
 
 // transform array values into numbered hash
 function transformValues(values) {
@@ -17,12 +23,6 @@ function transformValues(values) {
   }, {});
 }
 
-const TYPES = {
-  POS: 'positional',
-  NAME: 'named',
-  NUM: 'numeric'
-};
-
 // figure out placeholder type
 function getPlaceholderType(placeholder) {
   if (placeholderType) {
@@ -33,7 +33,7 @@ function getPlaceholderType(placeholder) {
     return TYPES.NUM;
   } else if (placeholder.match(/^\$[a-z][\w|\d]*\b$/)) {
     return TYPES.NAME;
-  } else if (placeholder.match(/^\$\b$/)) {
+  } else if (placeholder.match(/^\$$/)) {
     return TYPES.POS;
   } else {
     throw new Error('Unknown placeholder type');
@@ -75,6 +75,7 @@ function transformConfig (sql, values, callback, strict) {
   let last = 0, // lastIndex
     resultSql = '',
     i = 1, // placeholder number
+    num = 1,
     placeholderType = '',
     find;
 
@@ -93,7 +94,7 @@ function transformConfig (sql, values, callback, strict) {
     }
 
     // hash placeholder name
-    const placeholderName = find[0].substring(1) + (find[0] === '$' ? i : '');
+    const placeholderName = find[0].substring(1) + (find[0] === '$' ? num++ : '');
 
     // variable for multiple placeholders
     let placeholder = '';
@@ -119,7 +120,6 @@ function transformConfig (sql, values, callback, strict) {
         placeholder += '$' + (i++) + ',';
       });
       // replace single to multiple placeholders = $1 -> $1,$2
-
       hashParams[placeholderName] = placeholder.substring(0, placeholder.length - 1);
     }
 
@@ -133,6 +133,7 @@ function transformConfig (sql, values, callback, strict) {
   // add the rest of query sql
   resultSql += sql.slice(last, sql.length);
 
+
   // return values
   callback(null, { text: resultSql, values: outParams });
 }
@@ -141,7 +142,7 @@ const omniQuery = function (conf, values, callback, originalQuery, strict) {
   const config = makeConfig(conf, values, callback);
 
   if (config && config.text && config.text !== '' && typeof config.text === 'string') {
-    if (config.values && config.values.length && config.values.length > 0) {
+    if (config && config.values && Object.keys(config.values).length > 0) {
       transformConfig(config.text, config.values, function (error, result) {
         if (error) {
           if (callback) {
