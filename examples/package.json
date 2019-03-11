@@ -1,0 +1,37 @@
+{
+  "name": "pg-omni-examples",
+  "version": "0.1.0",
+  "description": "omni-placeholders for node-postgres examples",
+  "scripts": {
+    "start": "npm run db:start && npm run db:init && node examples.js && npm run db:stop",
+    "db:start": "docker start omni-postgres || docker run --name omni-postgres -p 5432:5432 -e POSTGRES_PASSWORD=password123 -d postgres",
+    "db:stop": "docker kill omni-postgres",
+    "db:init": "node ./bootstrap.js"
+  },
+  "keywords": [
+    "postgres",
+    "postgre",
+    "postgresql",
+    "pg",
+    "named",
+    "numeric",
+    "positional",
+    "omni",
+    "placeholders",
+    "multi"
+  ],
+  "homepage": "http://github.com/andr213/node-postgres-omni",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/andr213/node-postgres-omni.git"
+  },
+  "engines": {
+    "node": ">=8.1",
+    "npm": ">=5.1"
+  },
+  "author": "Andrey Yanov <andr213@gmail.com>",
+  "main": "./examples.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "license": "MIT"
+}
