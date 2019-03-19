@@ -221,6 +221,7 @@ module.exports.setType = setType;
 
 // for testing only
 module.exports.transformValues = transformValues;
+module.exports.transformConfig = transformConfig;
 
 // lazy loading pg
 module.exports.__defineGetter__('pg', function () {
