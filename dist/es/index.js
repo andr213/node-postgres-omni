@@ -214,7 +214,8 @@ module.exports.omni = omni;
 module.exports.TYPES = TYPES;
 module.exports.setType = setType; // for testing only
 
-module.exports.transformValues = transformValues; // lazy loading pg
+module.exports.transformValues = transformValues;
+module.exports.transformConfig = transformConfig; // lazy loading pg
 
 module.exports.__defineGetter__('pg', function () {
   return module.exports.pg = pgOmni(false);
