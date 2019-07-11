@@ -1,234 +1,229 @@
-## pg-omni
+## pg-omni-placeholders
 
-Поддержка именованных, нумерованных и позиционных заполнителей при работе с [node-postgres](https://github.com/brianc/node-postgres). Возможность также использовать любые из них в качестве множественных заполнителей.
+Support of named, positional and simple placeholders when working with [node-postgres](https://github.com/brianc/node-postgres).
+And ability to use all of them as a multi placeholders (inside IN and VALUES operators).
 
-    // именованные заполнители
+    // named placeholders
     client.query(
         'select name from cities where country = $country and population > $population',
-        {'country': 'USA', 'population': 1000000},
+        { country: 'USA', population: 1000000 },
         function (error, results) { console.log(results) }
     );
+
+    // positional placeholders
+    client.query(
+        'select name from cities where country = $1 and population > $2',
+        ['USA', 1000000],
+        function (error, results) { console.log(results) };
+    });
     
-    // позиционные заполнители
+    // simple placeholders
     client.query(
         'select name from cities where country = $ and population > $',
         ['USA', 1000000],
         function (error, results) { console.log(results) };
     });
-    
-    // именованные множественные заполнители
+
+    // named multi placeholders
     client.query(
         'select name from cities where country in ($country)',
         {'country': ['USA, CANADA']},
         function (error, results) { console.log(results) };
     });
     
-### Описание
+### Descripton
 
-PostgreSQL изначально поддерживает только нумерованные заполнители, поэтому модуль [node-postgres](https://github.com/brianc/node-postgres) тоже использует только их, чтобы максимально придерживаться спецификации СУБД.
+PostgreSQL doesn't support named parameters. It only supports positional parameters ($1, $2, ...). Though you can reference the same parameter more than once.
 
-Модуль pg-omni расширяет возможности [node-postgres](https://github.com/brianc/node-postgres), позволяя работать с тремя основными типами заполнителей. Их можно чередовать или использовать только один тип. Единственное ограничение - их нельзя смешивать в одном запросе.
+```
+SELECT * FROM persons WHERE lastname = $1 AND firstname = $1
+```
 
-Любые заполнители, которые вы используете, модуль преобразовывает в стандартные нумерованные заполнители и передает их на обработку в [node-postgres](https://github.com/brianc/node-postgres).
+That is why npm [node-postgres](https://github.com/brianc/node-postgres) support only positional placeholders.
 
-### Возможности
+The pg-omni module extend this behaviour of [node-postgres](https://github.com/brianc/node-postgres), and provide abilities to use all types of placeholders. Only one restriction exists - you can not mix types in one SQL query.
 
-* Именованные заполнители
-* Позиционные заполнители
-* Нумерованные заполнители
-* Множественные заполнители
+Any types of placeholders module converts to standard positional placeholders and pass it to process to [node-postgres](https://github.com/brianc/node-postgres).
 
-### Установка
+### Support
+
+* Named placeholders
+* Positional placeholders
+* Simple placeholders
+* Multi placeholders
+
+### Installing from GitHub
 
     npm install git://github.com/andr213/node-postgres-omni.git
 
-### Использование
+### Using
 
-Первый способ: пропатчить уже существующий Client
+First approach is to patch existing Client
 
     var pg = require("pg");
     var conString = "pg://dbuser:dbpassword@localhost:5432/dbname";
     
     var pgOmni = require('pg-omni');
     var client = new pg.Client(conString);
-    pgOmni.omni(client); // или просто pgOmni(client);
+    pgOmni.omni(client); // or just pgOmni(client);
 
+    // connect to the DB
+    client.connect();
+        
+    // make a query
     pgOmni.query(...);
 
-Второй способ: получить уже пропатченый объект pg
+    ...
+    client.end();
+    
+Second approach is to get already patched pg object
 
     var conString = "pg://dbuser:dbpassword@localhost:5432/dbname";
 
     var pgOmni = require('pg-omni').pg;
     var client = new pgOmni.Client(conString);
 
+    // connect to the DB
     client.connect();
-    ...
+    
+    // make a query
     client.query(...);
+    
     ...
     client.end();
 
-## Заполнители
-Заполнитель - переменная в sql-запросе, которая при обработке СУБД будет заменена соотвествующим ей значением.
+## Placeholders
+Placeholder - variable in the sql query that will be replaced with the corresponding value when processing by the DBMS.
 
-Заполнитель начинается со специального символа "$".
+* Placeholders starts from $ symbol
+* Does not support mixing different types of placeholders in one query
+* Placeholders can be used in both SELECT and UPDATE, INSERT queries.
 
-Нельзя смешивать разные типы заполнителей в одном запросе.
 
-Заполнители могут использоваться как в SELECT так и в UPDATE, INSERT запросах.
+### Named placeholders
+Placeholders whose binding to values ​​occurs by their unique name.
+* all Latin letters, numbers and underscores are allowed
+* must begin only with a letter (for example, $city, $city1, $city_1)
 
-### Именованные заполнители
-
-Заполнители, связывание которых со значениями происходит по их уникальному имени. Допускаются все буквы латинского алфавита, цифры и подчеркиания. Начинаться должны только с буквы (например, $city, $city1, $city_1).
-
-    
     client.query(
         'select name from cities where country = $country and population > $population',
-        { 'country': 'USA', 'population': 1000000 },
+        { country: 'USA', population: 1000000 },
         function (error, results) { console.log(results) }
     );
     
     
-* связываемые переменные должны передаваться в виде объекта
-* порядок следования не важен (связывание происходит по уникальному имени)
-* любой заполнитель может повторяться в sql-запросе сколько угодно раз
-* уникальных заполнителей в sql-запросе должно быть не меньше чем в связываемых переменных
+* bind variables must be passed as an object
+* the order is not important (binding occurs by a unique name)
+* any placeholder can be repeated in the sql query as many times as necessary
+* unique placeholders in the sql query must be no less than in the bind variables
     
-*Примечание. Наиболее удобные, наглядные и масштабируемые заполнители*
+*Note. The most convenient, visible and scalable placeholders*
 
-### Позиционные заполнители
+### Positional plcaceholders
 
-Заполнители, связывание которых со значениями происходит по их порядку следования.
+Placeholders, the binding of which to values ​​occurs by their order number (the index of the sequence in the array of the variables to be related).
+
+These placeholders are processed directly by the node-postgres module, unless they are used as multiple placeholders (see Multiple placeholders).
+
+    client.query(
+        'select name from cities where population > $2 and country = $1',
+        ['USA', 1000000],
+        function (error, results) { console.log(results) }
+    );
+    
+* bind variables must be passed as an array
+* the order is not important (binding occurs by order number)
+* any placeholder can be repeated in the sql query as many times as necessary
+
+### Simple placeholders
+
+Placeholders, the binding of which with the values ​​occurs in their order.
 
     client.query(
         'select name from cities where country = $ and population > $',
         ['USA', 1000000],
         function (error, results) { console.log(results) }
     );
-    
-* связываемые переменные должны передаваться в виде массива
-* количество заполнителей в запросе должно строго совпадать с количеством связываемых переменных
-* порядок заполнителей должен строго соответствовать порядку следования связываемых переменных
 
-### Нумерованные заполнители
+* bind variables must be passed as an array
+* the number of placeholders in the request must strictly coincide with the number of variables to be bound
+* the order of the placeholders must strictly follow the order of the variables being related
 
-Заполнители, связывание которых со значениями происходит по номеру (индексу следования в массиве связываемых переменных). 
 
-Эти заполнители обрабатываются напрямую модулем node-postgres, за исключением случая, когда они используются в качестве множественных заполнителей (см. Множественные заполнители)
+### Multi placeholders
 
-    client.query(
-        'select name from cities where country = $1 and population > $2',
-        ['USA', 1000000],
-        function (error, results) { console.log(results) }
-    );
-    
-* связываемые переменные должны передаваться в виде массива
-* порядок следования в sql-запросе не важен
-* любой заполнитель может повторяться в sql-запросе сколько угодно раз
+Any of the three types of placeholders can be used as multiple placeholders. They are used in cases where their number is not known in advance. For example, inside the IN operator. 
 
-### Множественные заполнители
-Любой из трех типов заполнителей может использоваться в качестве множественного заполнителя. Используются они в тех случаях, когда заранее неизвестно их количество. Например, внутри оператора IN. 
+Multiple placeholders are associated with variables using an array.
 
-Множественные заполнители связываются с переменными с помощью массива.
-
-    // с именованными заполнителями
+    // with named placeholders
     client.query(
         'select name from cities where country in ($country) and population > $population',
-        {'country': ['USA, CANADA'], 'population': 1000000},
+        { country: ['USA, CANADA'], population: 1000000 },
         function (error, results) { console.log(results) }
     );
     
-    // с позиционными заполнителями
+    // with simple placeholders
     client.query(
         'select name from cities where country in ($) and population > $',
         [['USA, CANADA'], 1000000],
         function (error, results) { console.log(results) }
     );
     
-    // с нумерованными заполнителями
+    // with positional placeholders
     client.query(
         'select name from cities where country in ($1) and population > $2',
         [['USA, CANADA'], 1000000],
         function (error, results) { console.log(results) }
     );
 
-Особенно удобно использовать их в операторах INSERT, например, наряду с использованием в обычном виде:
+It is especially convenient to use them in INSERT statements, for example, along with the use in the usual form:
 
-    // с помощью именных заполнителей
+    // with named placeholders
     client.query(
         'insert into cities (name, country, population) values ($name, $country, $population)',
-        {'name': 'New York, 'country': 'USA', 'population': 8000000},
+        { name: 'New York, country: 'USA', population: 8000000},
         function (error, results) { console.log(results) }
     );
     
-вы можете использовать еще и:
+you can use:
 
-    // с помощью именных множественных заполнителей
+    // with multiple named placeholders
     client.query(
         'insert into cities (name, country, population) values ($values)',
-        {'values': ['New York, 'USA', 8000000]},
+        { values: ['New York, 'USA', 8000000] },
         function (error, results) { console.log(results) }
     );
     
-    или
+    or
     
-    // с помощью нумерованных множественных заполнителей
+    // with multiple positional placeholders
     client.query(
         'insert into cities (name, country, population) values ($1)',
         [['New York, 'USA', 8000000]],
         function (error, results) { console.log(results) }
     );
     
-    и т.д.
+    and so on
+    
+### Default type of placholders
+The type of placeholders is determined automatically.
 
-### Предустановленный тип заполнителя
-По-умолчанию тип заполнителя определяется автоматически, но есть возможность их определить заранее. Это даст небольшой прирост скорости.
+### Dependencies
+[pg](https://www.npmjs.com/package/pg)
 
-
-```javascript
-    const conString = "pg://dbuser:dbpassword@localhost:5432/dbname";
-
-    const pgOmni = require('pg-omni').pg;
-    const TYPES = require('pg-omni').TYPES;
-    const setType = require('pg-omni').setType;
-
-    // для использования позиционных
-    setType(TYPES.POS)
-
-    // или для использования нумерованных
-    setType(TYPES.NUM)
-
-    // или для использования именных
-    setType(TYPES.NAMED)
-
-    var client = new pgOmni.Client(conString);
-
-    client.connect();
-    ...
-    client.query(...);
-    ...
-    client.end();
-```
-
-### Зависимости
-    [pg](https://www.npmjs.com/package/pg)
-
-### Лицензия
+### License
 Copyright (c) 2015 Andrey Yanov (andr213@gmail.com)
 
 [See the LICENSE for details.](https://github.com/andr213/node-postgres-omni/blob/master/license.md)
 
-### Похожие модули NODE
+### Similar modules
 
 * [pg-spice](https://github.com/sehrope/node-pg-spice)
 * [node-postgres-named](https://github.com/bwestergard/node-postgres-named)
 * [pg-db](https://github.com/sehrope/node-pg-db)
 
-### Похожие модули PERL
-* [DBIx-Simple-Named](https://github.com/andr213/DBIx-Simple-Named)
- 
-### Ключевые слова
-*postgre, postgres, postgresql, placeholders, named, position, positional, numeric, numbered, mupltiple, node, nodejs, js*
 
-*посгрес, плейсхолдеры, заполнители, именованные, именные, позиционные, нумерованные, порядковые, нода, ноде, жаваскрипт, джаваскрипт*
+### Keywords
+*postgre, postgres, postgresql, placeholders, named, position, positional, numeric, numbered, mupltiple, node, nodejs, node-postgres, js*
 
